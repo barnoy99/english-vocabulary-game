@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#3e2713">
+  <title>טיל המילים 🚀 Word Missile</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+</head>
+<body>
+
+  <!-- ===== Menu ===== -->
+  <div id="screen-menu" class="screen active">
+    <div class="menu-inner">
+      <div class="menu-title">🚀 טיל המילים</div>
+      <div class="menu-sub">Word Missile</div>
+      <div class="menu-desert">🌵 🛢️ 🐍 🪨 🌵</div>
+      <p class="menu-howto">
+        מילה באנגלית מופיעה למעלה — בחרו את הטיל עם התרגום הנכון,
+        והטיסו אותו במדבר בלי לפגוע במכשולים!
+      </p>
+      <button id="btn-start" class="big-btn">▶️ התחל משחק <span class="en-label">Start</span></button>
+      <button id="btn-stats" class="big-btn secondary">📖 המילים שלי <span class="en-label">My Words</span></button>
+      <button id="btn-sound" class="big-btn secondary">🔊 צליל / Sound</button>
+      <div class="menu-high">🏆 שיא / High Score: <span id="menu-high">0</span></div>
+    </div>
+  </div>
+
+  <!-- ===== Game ===== -->
+  <div id="screen-game" class="screen">
+    <div id="hud">
+      <span id="hud-hearts">❤️❤️❤️</span>
+      <span class="hud-item">שלב <span class="en-label">Level</span> <b id="hud-level">1</b></span>
+      <span class="hud-item">⭐ <b id="hud-score">0</b></span>
+    </div>
+
+    <div id="target-bar">
+      <button id="btn-speak" aria-label="השמע את המילה">🔊</button>
+      <div class="target-mid">
+        <div id="target-word">word</div>
+        <div id="target-sub">בחרו את הטיל עם התרגום הנכון!</div>
+      </div>
+    </div>
+
+    <div id="touch-layer">
+      <div id="canvas-wrap">
+        <canvas id="game-canvas"></canvas>
+        <div id="steer-hint">👆 החליקו אצבע ימינה ושמאלה<br>כדי להטות את הטיל</div>
+        <div id="score-pop"></div>
+        <div id="toast"></div>
+      </div>
+      <div id="bottom-zone">
+        <div id="pick-area"></div>
+        <div id="steer-strip" class="gone">⬅️ &nbsp;👆&nbsp; ➡️</div>
+      </div>
+    </div>
+
+    <div id="overlay-level" class="overlay">
+      <div class="overlay-card">
+        <div class="overlay-big">🎉 שלב <span id="level-num">2</span>!</div>
+        <div class="overlay-en">Level up!</div>
+        <p id="level-note"></p>
+        <button id="btn-continue" class="big-btn">המשך ▶️ <span class="en-label">Go!</span></button>
+      </div>
+    </div>
+
+    <div id="overlay-gameover" class="overlay">
+      <div class="overlay-card">
+        <div class="overlay-big">המשחק נגמר</div>
+        <div class="overlay-en">Game Over</div>
+        <div id="go-record" class="record gone">🏆 שיא חדש! New Record!</div>
+        <div class="go-line">ניקוד / Score: <b id="go-score">0</b></div>
+        <div class="go-line">שיא / Best: <b id="go-high">0</b></div>
+        <button id="btn-again" class="big-btn">🔄 שחקו שוב <span class="en-label">Again</span></button>
+        <button id="btn-menu" class="big-btn secondary">🏠 תפריט <span class="en-label">Menu</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Stats ===== -->
+  <div id="screen-stats" class="screen">
+    <div class="stats-inner">
+      <div class="menu-title small">📖 המילים שלי</div>
+      <div class="menu-sub">My Words</div>
+      <div class="stats-cards">
+        <div class="stat-card">✅ נלמדו<br><b><span id="stats-mastered">0</span></b></div>
+        <div class="stat-card">👀 תורגלו<br><b><span id="stats-seen">0</span> / <span id="stats-total">0</span></b></div>
+        <div class="stat-card">🏆 שיא<br><b id="stats-high">0</b></div>
+      </div>
+      <div class="stats-list-title">מילים לתרגול (לחצו כדי לשמוע 🔊):</div>
+      <ul id="stats-list"></ul>
+      <button id="btn-stats-back" class="big-btn">⬅️ חזרה <span class="en-label">Back</span></button>
+      <button id="btn-reset" class="text-btn">🗑️ איפוס התקדמות / Reset</button>
+    </div>
+  </div>
+
+  <div id="rotate-hint">📱 סובבו את הטלפון למצב עומד<br>Please rotate to portrait</div>
+
+  <script src="js/words.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
