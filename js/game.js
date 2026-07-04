@@ -75,15 +75,22 @@
   }
 
   // ---------- word selection (smart repetition) ----------
-  function maxBand() { return level <= 2 ? 1 : 2; }
+  const RECENT_WORDS = 20;       // a word (right or wrong) won't return as target within this window
+  const RECENT_DISTRACTORS = 12; // recently shown wrong-answer options are avoided when possible
+  let recentDistractors = [];
+
+  function pushRecent(en) {
+    recent.push(en);
+    if (recent.length > RECENT_WORDS) recent.shift();
+  }
 
   function pickNextWord() {
-    let pool = WORDS.filter(w => w.band <= maxBand() && recent.indexOf(w.en) === -1);
-    if (pool.length < 10) pool = WORDS.filter(w => w.band <= maxBand());
+    let pool = WORDS.filter(w => recent.indexOf(w.en) === -1);
+    if (pool.length < 10) pool = WORDS;
     const stats = Storage.allStats();
     const weights = pool.map(w => {
       const s = stats[w.en];
-      if (!s || s.seen === 0) return 3;                    // unseen: medium-high
+      if (!s || s.seen === 0) return 6;                    // unseen: high, new vocabulary flows in fast
       let base = (s.wrong + 1) / (s.streak + 1);           // struggled words come back
       if (s.streak >= 3) base *= 0.25;                     // mastered: rare
       return Math.max(0.2, base * 2);
@@ -98,19 +105,29 @@
   }
 
   function distractorsFor(word) {
-    const ok = w => w.en !== word.en && w.he !== word.he && w.band <= maxBand();
+    const ok = w => w.en !== word.en && w.he !== word.he;
+    const fresh = w => recentDistractors.indexOf(w.en) === -1;
     const sameTopic = shuffle(WORDS.filter(w => ok(w) && w.topic === word.topic));
     const others = shuffle(WORDS.filter(w => ok(w) && w.topic !== word.topic));
     const picks = [];
     const usedHe = { [word.he]: true };
-    for (const src of [sameTopic, others]) {
-      for (const w of src) {
-        if (picks.length >= 2) break;
-        if (usedHe[w.he]) continue;
-        picks.push(w);
-        usedHe[w.he] = true;
+    // first pass prefers options not shown recently; second pass allows repeats if needed
+    for (const allowRepeat of [false, true]) {
+      for (const src of [sameTopic, others]) {
+        for (const w of src) {
+          if (picks.length >= 2) break;
+          if (usedHe[w.he]) continue;
+          if (!allowRepeat && !fresh(w)) continue;
+          picks.push(w);
+          usedHe[w.he] = true;
+        }
       }
+      if (picks.length >= 2) break;
     }
+    picks.forEach(w => {
+      recentDistractors.push(w.en);
+      if (recentDistractors.length > RECENT_DISTRACTORS) recentDistractors.shift();
+    });
     return picks;
   }
 
@@ -162,6 +179,7 @@
       mode = "wrongwait";
       stat.seen++; stat.wrong++; stat.streak = 0;
       Storage.save();
+      pushRecent(current.en); // returns later with priority, but not immediately
       AudioFX.fizzle();
       btn.classList.add("fizzle");
       pickArea.querySelectorAll(".missile").forEach(b => {
@@ -327,8 +345,7 @@
     score += pts;
     updateHUD();
     showScorePop("+" + pts);
-    recent.push(current.en);
-    if (recent.length > 6) recent.shift();
+    pushRecent(current.en);
     wordsDone++;
     after(600, () => AudioFX.speak(current.en));
     after(1500, () => {
@@ -505,45 +522,24 @@
   function drawMissile(x, y) {
     ctx.save();
     ctx.translate(x, y);
-    // flame
+    // flame (below the rocket, in unrotated space)
     if (mode === "flight") {
       const fl = 14 + Math.random() * 12;
       ctx.fillStyle = "#ff9f43";
       ctx.beginPath();
-      ctx.moveTo(-7, 20); ctx.lineTo(0, 20 + fl); ctx.lineTo(7, 20); ctx.closePath();
+      ctx.moveTo(-7, 22); ctx.lineTo(0, 22 + fl); ctx.lineTo(7, 22); ctx.closePath();
       ctx.fill();
       ctx.fillStyle = "#feca57";
       ctx.beginPath();
-      ctx.moveTo(-4, 20); ctx.lineTo(0, 20 + fl * 0.6); ctx.lineTo(4, 20); ctx.closePath();
+      ctx.moveTo(-4, 22); ctx.lineTo(0, 22 + fl * 0.6); ctx.lineTo(4, 22); ctx.closePath();
       ctx.fill();
     }
-    // fins
-    ctx.fillStyle = "#d63031";
-    ctx.beginPath(); ctx.moveTo(-10, 20); ctx.lineTo(-17, 26); ctx.lineTo(-10, 6); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(10, 20); ctx.lineTo(17, 26); ctx.lineTo(10, 6); ctx.closePath(); ctx.fill();
-    // body
-    ctx.fillStyle = "#f5f6fa";
-    ctx.beginPath();
-    ctx.moveTo(-10, 20); ctx.lineTo(-10, -6);
-    ctx.quadraticCurveTo(-10, -26, 0, -30);
-    ctx.quadraticCurveTo(10, -26, 10, -6);
-    ctx.lineTo(10, 20); ctx.closePath();
-    ctx.fill();
-    // nose
-    ctx.fillStyle = "#d63031";
-    ctx.beginPath();
-    ctx.moveTo(-10, -10);
-    ctx.quadraticCurveTo(-10, -27, 0, -30);
-    ctx.quadraticCurveTo(10, -27, 10, -10);
-    ctx.closePath();
-    ctx.fill();
-    // window
-    ctx.fillStyle = "#48dbfb";
-    ctx.strokeStyle = "#576574";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, 2, 5.5, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
+    // same rocket as the pick buttons: 🚀 emoji rotated from NE to straight up
+    ctx.rotate(-Math.PI / 4);
+    ctx.font = "46px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🚀", 0, 0);
     ctx.restore();
   }
 
