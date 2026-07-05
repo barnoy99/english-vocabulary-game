@@ -16,20 +16,35 @@
     return a;
   }
 
-  // ---------- word sampling: round-robin over shuffled topic groups ----------
-  function pickTestWords() {
+  // ---------- word sampling ----------
+  // Skewed toward the hard end (Jonathan aces the easy words): 8 band-3, 8 band-2, 4 band-1.
+  // Within each band, round-robin over shuffled topic groups for spread; unique Hebrew overall.
+  function pickFromBand(band, n, usedHe, picks) {
     const byTopic = {};
-    WORDS.forEach(w => (byTopic[w.topic] = byTopic[w.topic] || []).push(w));
+    WORDS.filter(w => w.band === band).forEach(w => (byTopic[w.topic] = byTopic[w.topic] || []).push(w));
     const groups = shuffle(Object.keys(byTopic).map(k => shuffle(byTopic[k])));
-    const picks = [];
-    const usedHe = {};
-    let gi = 0, safety = 0;
-    while (picks.length < TOTAL && safety++ < 3000) {
+    let gi = 0, safety = 0, added = 0;
+    while (added < n && safety++ < 2000 && groups.length) {
       const g = groups[gi++ % groups.length];
       const w = g.pop();
       if (!w || usedHe[w.he]) continue;
       usedHe[w.he] = true;
       picks.push(w);
+      added++;
+    }
+    return added;
+  }
+
+  function pickTestWords() {
+    const picks = [];
+    const usedHe = {};
+    let got = 0;
+    [[3, 8], [2, 8], [1, 4]].forEach(bn => { got += pickFromBand(bn[0], bn[1], usedHe, picks); });
+    if (got < TOTAL) pickFromBand(2, TOTAL - got, usedHe, picks);
+    let safety = 0;
+    while (picks.length < TOTAL && safety++ < 2000) {
+      const w = WORDS[Math.floor(Math.random() * WORDS.length)];
+      if (!usedHe[w.he]) { usedHe[w.he] = true; picks.push(w); }
     }
     return shuffle(picks);
   }

@@ -198,7 +198,7 @@
     flight = {
       traveled: 0,
       dist: 2000 + level * 260,
-      speed: 215 + level * 28,
+      speed: 235 + level * 30,
       missileX: W / 2,
       targetX: W / 2,
       launchT: 0,
@@ -234,19 +234,22 @@
       f.gapCenter + (Math.random() - 0.5) * roadW * 0.8,
       roadLeft + 44, roadRight - 44
     );
-    const gapHalf = Math.max(34, 52 - level * 3);
-    const count = 1 + Math.floor(Math.random() * 2) + (level >= 3 && Math.random() < 0.4 ? 1 : 0);
+    const gapHalf = Math.max(32, 48 - level * 3);
+    const count = 1 + Math.floor(Math.random() * 2) + (Math.random() < 0.15 + level * 0.05 ? 1 : 0);
     for (let i = 0; i < count; i++) {
       for (let attempt = 0; attempt < 10; attempt++) {
         const t = OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)];
         const x = roadLeft + t.r + Math.random() * (roadW - t.r * 2);
         if (Math.abs(x - f.gapCenter) < gapHalf + t.r) continue;
         if (f.obstacles.some(o => o.y < -20 && Math.abs(o.x - x) < o.r + t.r + 14)) continue;
-        const snake = level >= 2 && Math.random() < 0.18;
+        const snake = Math.random() < 0.18;
+        // barrels roll across the road right-to-left (bouncing); snakes slither both ways
+        const roller = !snake && t.emoji === "🛢️";
         f.obstacles.push({
           x, y: -70, r: t.r,
           emoji: snake ? "🐍" : t.emoji,
-          vx: snake ? (Math.random() < 0.5 ? -1 : 1) * (36 + level * 6) : 0
+          vx: snake ? (Math.random() < 0.5 ? -1 : 1) * (36 + level * 6)
+            : roller ? -(55 + level * 10) : 0
         });
         break;
       }
@@ -268,7 +271,7 @@
     const ds = f.speed * dt;
     f.sinceSpawn += ds;
     f.sinceDeco += ds;
-    const interval = Math.max(140, 270 - level * 16);
+    const interval = Math.max(125, 230 - level * 16);
     if (f.sinceSpawn >= interval && remaining > H * 0.95) {
       f.sinceSpawn = 0;
       spawnRow();
