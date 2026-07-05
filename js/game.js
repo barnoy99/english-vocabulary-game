@@ -198,7 +198,7 @@
     flight = {
       traveled: 0,
       dist: 2000 + level * 260,
-      speed: 205 + level * 26,
+      speed: 215 + level * 28,
       missileX: W / 2,
       targetX: W / 2,
       launchT: 0,
@@ -229,19 +229,20 @@
   function spawnRow() {
     const f = flight;
     const roadW = roadRight - roadLeft;
+    // the safe gap zigzags across the road so the player must actually steer
     f.gapCenter = clamp(
-      f.gapCenter + (Math.random() - 0.5) * roadW * 0.6,
+      f.gapCenter + (Math.random() - 0.5) * roadW * 0.8,
       roadLeft + 44, roadRight - 44
     );
-    const gapHalf = Math.max(40, 60 - level * 3);
-    const count = 1 + Math.floor(Math.random() * (1 + Math.min(2, Math.floor(level / 2))));
+    const gapHalf = Math.max(34, 52 - level * 3);
+    const count = 1 + Math.floor(Math.random() * 2) + (level >= 3 && Math.random() < 0.4 ? 1 : 0);
     for (let i = 0; i < count; i++) {
       for (let attempt = 0; attempt < 10; attempt++) {
         const t = OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)];
         const x = roadLeft + t.r + Math.random() * (roadW - t.r * 2);
         if (Math.abs(x - f.gapCenter) < gapHalf + t.r) continue;
         if (f.obstacles.some(o => o.y < -20 && Math.abs(o.x - x) < o.r + t.r + 14)) continue;
-        const snake = level >= 3 && Math.random() < 0.15;
+        const snake = level >= 2 && Math.random() < 0.18;
         f.obstacles.push({
           x, y: -70, r: t.r,
           emoji: snake ? "🐍" : t.emoji,
@@ -267,7 +268,7 @@
     const ds = f.speed * dt;
     f.sinceSpawn += ds;
     f.sinceDeco += ds;
-    const interval = Math.max(150, 305 - level * 18);
+    const interval = Math.max(140, 270 - level * 16);
     if (f.sinceSpawn >= interval && remaining > H * 0.95) {
       f.sinceSpawn = 0;
       spawnRow();
