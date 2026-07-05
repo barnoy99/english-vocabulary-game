@@ -35,7 +35,7 @@
     salon: {
       colors: { shoulder: "#f2b8cf", road: "#c98b4e", edge: "#8a5a2e", dash: "#e8b47f" },
       decos: ["💈", "🎀", "✨"],
-      obstacles: [{ emoji: "🧶", r: 20 }, { emoji: "✂️", r: 18 }, { emoji: "🧼", r: 18, roller: true }],
+      obstacles: [{ knot: true, r: 20 }, { emoji: "✂️", r: 18 }, { emoji: "🧼", r: 18, roller: true }],
       crawler: "🐜",
       vehicle: glyphSupported("🪮") ? { char: "🪮", rot: 0 } : { char: "🖌️", rot: Math.PI / 4 },
       trail: "sparkle",
@@ -47,9 +47,9 @@
 
   // ---------- profiles ----------
   const PROFILES = {
-    jonathan: { label: "יהונתן", emoji: "👦", theme: "desert", pool: w => w.band >= 2, quota: [[4, 8], [3, 8], [2, 4]] },
-    abigail:  { label: "אביגיל", emoji: "👧", theme: "salon",  pool: w => w.band <= 2, quota: [[2, 8], [1, 8], [0, 4]] },
-    guest:    { label: "אורח",   emoji: "👤", theme: null,     pool: () => true,       quota: [[3, 7], [2, 7], [1, 6]] }
+    jonathan: { label: "Jonathan", emoji: "👦", theme: "desert", pool: w => w.band >= 2, quota: [[4, 8], [3, 8], [2, 4]] },
+    abigail:  { label: "Abigail",  emoji: "👧", theme: "salon",  pool: w => w.band <= 2, quota: [[2, 8], [1, 8], [0, 4]] },
+    guest:    { label: "Guest",    emoji: "👤", theme: null,     pool: () => true,       quota: [[3, 7], [2, 7], [1, 6]] }
   };
   let profileId = null;
   function poolWords() { return WORDS.filter(PROFILES[profileId].pool); }
@@ -299,6 +299,8 @@
         f.obstacles.push({
           x, y: -70, r: crawler ? 18 : t.r,
           emoji: crawler ? theme.crawler : t.emoji,
+          knot: !crawler && !!t.knot,          // hair tangle, drawn by hand (no emoji for it)
+          seed: Math.random() * 10,
           vx: crawler ? (Math.random() < 0.5 ? -1 : 1) * (36 + level * 6)
             : roller ? -(55 + level * 10) : 0
         });
@@ -545,8 +547,12 @@
     if (flight) {
       // obstacles
       for (const o of flight.obstacles) {
-        ctx.font = o.r * 2.1 + "px serif";
-        ctx.fillText(o.emoji, o.x, o.y);
+        if (o.knot) {
+          drawKnot(o);
+        } else {
+          ctx.font = o.r * 2.1 + "px serif";
+          ctx.fillText(o.emoji, o.x, o.y);
+        }
       }
       // finish gate
       const remaining = flight.dist - flight.traveled;
@@ -604,6 +610,38 @@
         }
       }
     }
+  }
+
+  function drawKnot(o) {
+    // a nasty tangle of hair: dark scribbled loops + stray strands sticking out
+    ctx.save();
+    ctx.translate(o.x, o.y);
+    ctx.strokeStyle = "#4a2c12";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath();
+      for (let t = 0; t <= Math.PI * 2 + 0.3; t += 0.22) {
+        const rr = o.r * (0.35 + 0.3 * Math.sin(t * 2.7 + o.seed + k * 2.1));
+        const px = Math.cos(t + k) * rr * 1.15;
+        const py = Math.sin(t * 1.3 + k) * rr;
+        t === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+    ctx.strokeStyle = "#2e1a0a";
+    ctx.lineWidth = 2;
+    for (let k = 0; k < 5; k++) {
+      const a = o.seed + k * 1.35;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * o.r * 0.4, Math.sin(a) * o.r * 0.4);
+      ctx.quadraticCurveTo(
+        Math.cos(a + 0.4) * o.r * 0.9, Math.sin(a + 0.4) * o.r * 0.9,
+        Math.cos(a + 0.9) * o.r * 1.25, Math.sin(a + 0.9) * o.r * 1.25
+      );
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function drawMissile(x, y) {

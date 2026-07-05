@@ -496,6 +496,7 @@ html, body {
   font-weight: 700;
   color: #ffe9b3;
 }
+#menu-profile-label { direction: ltr; }
 #btn-switch-profile {
   background: #3e271388;
   border: none;
