@@ -4,9 +4,61 @@
   const WORDS_PER_LEVEL = 8;
   const MAX_LIVES = 3;
 
+  // ---------- themes ----------
+  // Everything scene-specific lives here; the engine reads the active theme.
+  function glyphSupported(ch) {
+    const c = document.createElement("canvas");
+    c.width = c.height = 24;
+    const x = c.getContext("2d");
+    const draw = s => {
+      x.clearRect(0, 0, 24, 24);
+      x.font = "20px serif";
+      x.textAlign = "center";
+      x.textBaseline = "middle";
+      x.fillText(s, 12, 12);
+      return x.getImageData(0, 0, 24, 24).data.join(",");
+    };
+    return draw(ch) !== draw("\u{10FFFF}"); // differs from the guaranteed-missing glyph
+  }
+
+  const THEMES = {
+    desert: {
+      colors: { shoulder: "#e8c070", road: "#cf9f52", edge: "#a5762f", dash: "#f3e0ac" },
+      decos: ["🌵", "🪨", "🌾"],
+      obstacles: [{ emoji: "🌵", r: 20 }, { emoji: "🪨", r: 17 }, { emoji: "🛢️", r: 18, roller: true }],
+      crawler: "🐍",
+      vehicle: { char: "🚀", rot: -Math.PI / 4 },
+      trail: "flame",
+      roadStyle: "dashes",
+      gate: "checkers"
+    },
+    salon: {
+      colors: { shoulder: "#f2b8cf", road: "#c98b4e", edge: "#8a5a2e", dash: "#e8b47f" },
+      decos: ["💈", "🎀", "✨"],
+      obstacles: [{ emoji: "🧶", r: 20 }, { emoji: "✂️", r: 18 }, { emoji: "🧼", r: 18, roller: true }],
+      crawler: "🐜",
+      vehicle: glyphSupported("🪮") ? { char: "🪮", rot: 0 } : { char: "🖌️", rot: Math.PI / 4 },
+      trail: "sparkle",
+      roadStyle: "strands",
+      gate: "ribbon"
+    }
+  };
+  let theme = THEMES.desert;
+
+  // ---------- profiles ----------
+  const PROFILES = {
+    jonathan: { label: "יהונתן", emoji: "👦", theme: "desert", pool: w => w.band >= 2, quota: [[4, 8], [3, 8], [2, 4]] },
+    abigail:  { label: "אביגיל", emoji: "👧", theme: "salon",  pool: w => w.band <= 2, quota: [[2, 8], [1, 8], [0, 4]] },
+    guest:    { label: "אורח",   emoji: "👤", theme: null,     pool: () => true,       quota: [[3, 7], [2, 7], [1, 6]] }
+  };
+  let profileId = null;
+  function poolWords() { return WORDS.filter(PROFILES[profileId].pool); }
+  // shared with test.js
+  window.Profiles = { config: PROFILES, current: () => profileId, poolWords };
+
   // ---------- DOM ----------
   const $ = id => document.getElementById(id);
-  const screens = { menu: $("screen-menu"), game: $("screen-game"), stats: $("screen-stats") };
+  const screens = { profile: $("screen-profile"), menu: $("screen-menu"), game: $("screen-game"), stats: $("screen-stats") };
   const canvas = $("game-canvas");
   const ctx = canvas.getContext("2d");
   const pickArea = $("pick-area");
@@ -51,7 +103,7 @@
 
   function seedAmbient() {
     ambientDecos = [];
-    const emojis = ["🌵", "🪨", "🌾", "🌵"];
+    const emojis = theme.decos;
     for (let i = 0; i < 7; i++) {
       const left = i % 2 === 0;
       ambientDecos.push({
@@ -85,8 +137,9 @@
   }
 
   function pickNextWord() {
-    let pool = WORDS.filter(w => recent.indexOf(w.en) === -1);
-    if (pool.length < 10) pool = WORDS;
+    const all = poolWords();
+    let pool = all.filter(w => recent.indexOf(w.en) === -1);
+    if (pool.length < 10) pool = all;
     const stats = Storage.allStats();
     const weights = pool.map(w => {
       const s = stats[w.en];
@@ -105,10 +158,11 @@
   }
 
   function distractorsFor(word) {
+    const all = poolWords();
     const ok = w => w.en !== word.en && w.he !== word.he;
     const fresh = w => recentDistractors.indexOf(w.en) === -1;
-    const sameTopic = shuffle(WORDS.filter(w => ok(w) && w.topic === word.topic));
-    const others = shuffle(WORDS.filter(w => ok(w) && w.topic !== word.topic));
+    const sameTopic = shuffle(all.filter(w => ok(w) && w.topic === word.topic));
+    const others = shuffle(all.filter(w => ok(w) && w.topic !== word.topic));
     const picks = [];
     const usedHe = { [word.he]: true };
     // first pass prefers options not shown recently; second pass allows repeats if needed
@@ -153,7 +207,10 @@
     options.forEach(opt => {
       const btn = document.createElement("button");
       btn.className = "missile";
-      btn.innerHTML = '<span class="rocket">🚀</span><span class="m-word"></span>';
+      btn.innerHTML = '<span class="rocket"></span><span class="m-word"></span>';
+      const rocket = btn.querySelector(".rocket");
+      rocket.textContent = theme.vehicle.char;
+      rocket.style.transform = "rotate(" + theme.vehicle.rot + "rad)";
       btn.querySelector(".m-word").textContent = opt.he;
       btn.addEventListener("click", () => onPick(btn, opt));
       pickArea.appendChild(btn);
@@ -220,11 +277,6 @@
     });
   }
 
-  const OBSTACLES = [
-    { emoji: "🌵", r: 20 },
-    { emoji: "🛢️", r: 18 },
-    { emoji: "🪨", r: 17 }
-  ];
 
   function spawnRow() {
     const f = flight;
@@ -238,17 +290,16 @@
     const count = 1 + Math.floor(Math.random() * 2) + (Math.random() < 0.15 + level * 0.05 ? 1 : 0);
     for (let i = 0; i < count; i++) {
       for (let attempt = 0; attempt < 10; attempt++) {
-        const t = OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)];
+        const t = theme.obstacles[Math.floor(Math.random() * theme.obstacles.length)];
         const x = roadLeft + t.r + Math.random() * (roadW - t.r * 2);
         if (Math.abs(x - f.gapCenter) < gapHalf + t.r) continue;
         if (f.obstacles.some(o => o.y < -20 && Math.abs(o.x - x) < o.r + t.r + 14)) continue;
-        const snake = Math.random() < 0.18;
-        // barrels roll across the road right-to-left (bouncing); snakes slither both ways
-        const roller = !snake && t.emoji === "🛢️";
+        const crawler = Math.random() < 0.18; // snake / louse, slithers both ways
+        const roller = !crawler && t.roller;  // barrel / soap, rolls across right-to-left
         f.obstacles.push({
-          x, y: -70, r: t.r,
-          emoji: snake ? "🐍" : t.emoji,
-          vx: snake ? (Math.random() < 0.5 ? -1 : 1) * (36 + level * 6)
+          x, y: -70, r: crawler ? 18 : t.r,
+          emoji: crawler ? theme.crawler : t.emoji,
+          vx: crawler ? (Math.random() < 0.5 ? -1 : 1) * (36 + level * 6)
             : roller ? -(55 + level * 10) : 0
         });
         break;
@@ -451,20 +502,35 @@
     }
     const scroll = flight ? flight.traveled : 0;
 
-    // sand + road
-    ctx.fillStyle = "#e8c070";
+    // shoulders + road (theme colors)
+    ctx.fillStyle = theme.colors.shoulder;
     ctx.fillRect(-20, -20, W + 40, H + 40);
-    ctx.fillStyle = "#cf9f52";
+    ctx.fillStyle = theme.colors.road;
     ctx.fillRect(roadLeft, -20, roadRight - roadLeft, H + 40);
-    ctx.fillStyle = "#a5762f";
+    ctx.fillStyle = theme.colors.edge;
     ctx.fillRect(roadLeft - 4, -20, 4, H + 40);
     ctx.fillRect(roadRight, -20, 4, H + 40);
 
-    // dashed center line, scrolling with travel
-    const dash = 30, gap = 26, seg = dash + gap;
-    ctx.fillStyle = "#f3e0ac";
-    let y0 = (scroll % seg) - seg;
-    for (let y = y0; y < H + seg; y += seg) ctx.fillRect(W / 2 - 3, y, 6, dash);
+    if (theme.roadStyle === "strands") {
+      // a lock of hair: wavy strands flowing down, scrolling with travel
+      ctx.strokeStyle = theme.colors.dash;
+      ctx.lineWidth = 3;
+      [0.32, 0.5, 0.68].forEach((f, si) => {
+        const baseX = roadLeft + (roadRight - roadLeft) * f;
+        ctx.beginPath();
+        for (let y = -20; y < H + 20; y += 8) {
+          const x = baseX + Math.sin((y + scroll) * 0.02 + si * 2.1) * 9;
+          y === -20 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      });
+    } else {
+      // dashed center line, scrolling with travel
+      const dash = 30, gap = 26, seg = dash + gap;
+      ctx.fillStyle = theme.colors.dash;
+      let y0 = (scroll % seg) - seg;
+      for (let y = y0; y < H + seg; y += seg) ctx.fillRect(W / 2 - 3, y, 6, dash);
+    }
 
     // shoulder decorations
     ctx.textAlign = "center";
@@ -506,19 +572,36 @@
   }
 
   function drawGate(y) {
-    const postW = 10, bannerH = 26;
+    const postW = 10;
     ctx.fillStyle = "#6d4c2f";
     ctx.fillRect(roadLeft - 6, y - 34, postW, 54);
     ctx.fillRect(roadRight - 4, y - 34, postW, 54);
-    // glow
-    ctx.fillStyle = "rgba(255, 220, 90, 0.25)";
-    ctx.fillRect(roadLeft, y - 30 + bannerH, roadRight - roadLeft, 40);
-    // checkered banner
-    const sq = 13;
-    for (let i = 0; (roadLeft + 4 + i * sq) < roadRight - 4; i++) {
-      for (let j = 0; j < 2; j++) {
-        ctx.fillStyle = (i + j) % 2 === 0 ? "#222" : "#fff";
-        ctx.fillRect(roadLeft + 4 + i * sq, y - 30 + j * sq, Math.min(sq, roadRight - 4 - (roadLeft + 4 + i * sq)), sq);
+    if (theme.gate === "ribbon") {
+      // silky pink ribbon with a bow in the middle and sparkles
+      const grd = ctx.createLinearGradient(0, y - 30, 0, y - 4);
+      grd.addColorStop(0, "#ff8fb8");
+      grd.addColorStop(1, "#e75d97");
+      ctx.fillStyle = grd;
+      ctx.fillRect(roadLeft + 4, y - 30, roadRight - roadLeft - 8, 26);
+      ctx.fillStyle = "rgba(255, 190, 220, 0.3)";
+      ctx.fillRect(roadLeft, y - 4, roadRight - roadLeft, 40);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "30px serif";
+      ctx.fillText("🎀", (roadLeft + roadRight) / 2, y - 17);
+      ctx.font = "18px serif";
+      ctx.fillText("✨", roadLeft + 28, y - 17);
+      ctx.fillText("✨", roadRight - 28, y - 17);
+    } else {
+      // checkered finish banner
+      ctx.fillStyle = "rgba(255, 220, 90, 0.25)";
+      ctx.fillRect(roadLeft, y - 4, roadRight - roadLeft, 40);
+      const sq = 13;
+      for (let i = 0; (roadLeft + 4 + i * sq) < roadRight - 4; i++) {
+        for (let j = 0; j < 2; j++) {
+          ctx.fillStyle = (i + j) % 2 === 0 ? "#222" : "#fff";
+          ctx.fillRect(roadLeft + 4 + i * sq, y - 30 + j * sq, Math.min(sq, roadRight - 4 - (roadLeft + 4 + i * sq)), sq);
+        }
       }
     }
   }
@@ -526,24 +609,36 @@
   function drawMissile(x, y) {
     ctx.save();
     ctx.translate(x, y);
-    // flame (below the rocket, in unrotated space)
     if (mode === "flight") {
-      const fl = 14 + Math.random() * 12;
-      ctx.fillStyle = "#ff9f43";
-      ctx.beginPath();
-      ctx.moveTo(-7, 22); ctx.lineTo(0, 22 + fl); ctx.lineTo(7, 22); ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "#feca57";
-      ctx.beginPath();
-      ctx.moveTo(-4, 22); ctx.lineTo(0, 22 + fl * 0.6); ctx.lineTo(4, 22); ctx.closePath();
-      ctx.fill();
+      if (theme.trail === "sparkle") {
+        // glitter trail behind the comb
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        for (let i = 0; i < 3; i++) {
+          ctx.globalAlpha = 0.5 + Math.random() * 0.5;
+          ctx.font = (8 + Math.random() * 10) + "px serif";
+          ctx.fillText("✨", (Math.random() - 0.5) * 26, 26 + Math.random() * 22);
+        }
+        ctx.globalAlpha = 1;
+      } else {
+        // rocket flame (below, in unrotated space)
+        const fl = 14 + Math.random() * 12;
+        ctx.fillStyle = "#ff9f43";
+        ctx.beginPath();
+        ctx.moveTo(-7, 22); ctx.lineTo(0, 22 + fl); ctx.lineTo(7, 22); ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#feca57";
+        ctx.beginPath();
+        ctx.moveTo(-4, 22); ctx.lineTo(0, 22 + fl * 0.6); ctx.lineTo(4, 22); ctx.closePath();
+        ctx.fill();
+      }
     }
-    // same rocket as the pick buttons: 🚀 emoji rotated from NE to straight up
-    ctx.rotate(-Math.PI / 4);
+    // same vehicle as the pick buttons, rotated to point up
+    ctx.rotate(theme.vehicle.rot);
     ctx.font = "46px serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("🚀", 0, 0);
+    ctx.fillText(theme.vehicle.char, 0, 0);
     ctx.restore();
   }
 
@@ -627,6 +722,40 @@
     }
   }
 
+  // ---------- profile selection ----------
+  function setTheme(name) {
+    theme = THEMES[name] || THEMES.desert;
+    document.body.classList.toggle("theme-salon", theme === THEMES.salon);
+    document.querySelector(".menu-desert").textContent =
+      theme === THEMES.salon ? "💈 🎀 🐜 ✂️ 💇‍♀️" : "🌵 🛢️ 🐍 🪨 🌵";
+    seedAmbient();
+  }
+
+  function selectProfile(id, themeName) {
+    profileId = id;
+    Storage.setProfile(id);
+    setTheme(themeName || PROFILES[id].theme || "desert");
+    $("menu-profile-label").textContent = PROFILES[id].emoji + " " + PROFILES[id].label;
+    $("menu-high").textContent = Storage.highScore;
+    $("guest-scenes").classList.add("gone");
+    clearTimers();
+    mode = "menu";
+    show("menu");
+  }
+
+  $("btn-prof-jonathan").addEventListener("click", () => { AudioFX.unlock(); AudioFX.click(); selectProfile("jonathan"); });
+  $("btn-prof-abigail").addEventListener("click", () => { AudioFX.unlock(); AudioFX.click(); selectProfile("abigail"); });
+  $("btn-prof-guest").addEventListener("click", () => { AudioFX.unlock(); AudioFX.click(); $("guest-scenes").classList.toggle("gone"); });
+  $("btn-scene-desert").addEventListener("click", () => { AudioFX.click(); selectProfile("guest", "desert"); });
+  $("btn-scene-salon").addEventListener("click", () => { AudioFX.click(); selectProfile("guest", "salon"); });
+  $("btn-switch-profile").addEventListener("click", () => {
+    AudioFX.click();
+    clearTimers();
+    mode = "profile";
+    $("guest-scenes").classList.add("gone");
+    show("profile");
+  });
+
   // ---------- buttons ----------
   function syncSoundBtn() {
     $("btn-sound").textContent = Storage.sound ? "🔊 צליל / Sound" : "🔇 צליל / Sound";
@@ -699,9 +828,9 @@
 
   // ---------- init ----------
   window.addEventListener("resize", resize);
-  $("menu-high").textContent = Storage.highScore;
   syncSoundBtn();
   resize();
   updateHUD();
+  mode = "profile"; // launch always starts at the who's-playing screen
   schedule();
 })();

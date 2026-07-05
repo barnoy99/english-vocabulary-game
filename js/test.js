@@ -17,11 +17,12 @@
   }
 
   // ---------- word sampling ----------
-  // Skewed toward the hard end (Jonathan aces the easy words): 8 band-3, 8 band-2, 4 band-1.
-  // Within each band, round-robin over shuffled topic groups for spread; unique Hebrew overall.
-  function pickFromBand(band, n, usedHe, picks) {
+  // Per-profile quotas skewed toward the hard end of that profile's pool
+  // (e.g. Jonathan: 8 band-4, 8 band-3, 4 band-2). Within each band, round-robin
+  // over shuffled topic groups for spread; unique Hebrew overall.
+  function pickFromBand(pool, band, n, usedHe, picks) {
     const byTopic = {};
-    WORDS.filter(w => w.band === band).forEach(w => (byTopic[w.topic] = byTopic[w.topic] || []).push(w));
+    pool.filter(w => w.band === band).forEach(w => (byTopic[w.topic] = byTopic[w.topic] || []).push(w));
     const groups = shuffle(Object.keys(byTopic).map(k => shuffle(byTopic[k])));
     let gi = 0, safety = 0, added = 0;
     while (added < n && safety++ < 2000 && groups.length) {
@@ -36,14 +37,15 @@
   }
 
   function pickTestWords() {
+    const pool = Profiles.poolWords();
+    const quota = Profiles.config[Profiles.current()].quota;
     const picks = [];
     const usedHe = {};
     let got = 0;
-    [[3, 8], [2, 8], [1, 4]].forEach(bn => { got += pickFromBand(bn[0], bn[1], usedHe, picks); });
-    if (got < TOTAL) pickFromBand(2, TOTAL - got, usedHe, picks);
+    quota.forEach(bn => { got += pickFromBand(pool, bn[0], bn[1], usedHe, picks); });
     let safety = 0;
     while (picks.length < TOTAL && safety++ < 2000) {
-      const w = WORDS[Math.floor(Math.random() * WORDS.length)];
+      const w = pool[Math.floor(Math.random() * pool.length)];
       if (!usedHe[w.he]) { usedHe[w.he] = true; picks.push(w); }
     }
     return shuffle(picks);
@@ -77,11 +79,19 @@
     const tests = Storage.tests;
     const ul = $("test-history");
     ul.innerHTML = "";
-    if (!tests.length) {
+    if (Profiles.current() === "guest") {
       const li = document.createElement("li");
       li.className = "stats-empty";
-      li.textContent = "עוד אין תוצאות — זה הזמן למבחן הראשון!";
+      li.textContent = "תוצאות של אורחים לא נשמרות 🙂";
       ul.appendChild(li);
+    }
+    if (!tests.length) {
+      if (Profiles.current() !== "guest") {
+        const li = document.createElement("li");
+        li.className = "stats-empty";
+        li.textContent = "עוד אין תוצאות — זה הזמן למבחן הראשון!";
+        ul.appendChild(li);
+      }
       return;
     }
     const best = Math.max.apply(null, tests.map(t => t.s));

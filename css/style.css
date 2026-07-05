@@ -476,6 +476,78 @@ html, body {
 #test-history li:last-child, #test-missed li:last-child { border-bottom: none; }
 #test-missed li { cursor: pointer; }
 
+/* ---------- profile select ---------- */
+.profile-btn { font-size: 24px; padding: 16px 18px; }
+.salon-btn {
+  background: linear-gradient(#ffc2da, #ef7bab);
+  box-shadow: 0 4px 0 #a8447a;
+}
+#guest-scenes { margin-top: 6px; }
+.scene-label { font-size: 16px; margin: 10px 0 4px; color: #ffe9b3; }
+.scene-row { display: flex; gap: 10px; }
+.scene-btn { font-size: 17px; }
+#menu-profile-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 8px 0 2px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffe9b3;
+}
+#btn-switch-profile {
+  background: #3e271388;
+  border: none;
+  color: #fdf3dc;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* ---------- salon theme skin ---------- */
+body.theme-salon #screen-menu,
+body.theme-salon #screen-stats,
+body.theme-salon #screen-test {
+  background: linear-gradient(#7a2c52 0%, #a84a7a 40%, #e78bb5 80%, #f6c6d8 100%);
+}
+body.theme-salon #screen-game { background: #5b2340; }
+body.theme-salon #hud { color: #ffe3f0; }
+body.theme-salon #target-bar {
+  background: linear-gradient(#5b2340, #7a2c52);
+  border-top-color: #a84a7a;
+  border-bottom-color: #3d1229;
+}
+body.theme-salon #btn-speak { background: #a84a7a; box-shadow: 0 3px 0 #3d1229; }
+body.theme-salon #target-sub { color: #ffc2da; }
+body.theme-salon #bottom-zone {
+  background: linear-gradient(#7a2c52, #5b2340);
+  border-top-color: #a84a7a;
+}
+body.theme-salon .missile {
+  background: linear-gradient(#ffd7e6, #ef9cc0);
+  box-shadow: 0 4px 0 #a8447a;
+}
+body.theme-salon .missile .m-word { color: #5b2340; }
+body.theme-salon .big-btn {
+  background: linear-gradient(#ffc2da, #ef7bab);
+  box-shadow: 0 4px 0 #a8447a;
+  color: #4a1030;
+}
+body.theme-salon .big-btn.secondary {
+  background: linear-gradient(#f9e0eb, #dcaac4);
+  box-shadow: 0 4px 0 #8a5a74;
+}
+body.theme-salon .overlay-card {
+  background: linear-gradient(#7a2c52, #5b2340);
+  border-color: #ffc2da;
+}
+body.theme-salon .menu-sub, body.theme-salon .menu-high,
+body.theme-salon .scene-label, body.theme-salon #menu-profile-row { color: #ffe3f0; }
+body.theme-salon .hud-item b, body.theme-salon #test-leg-progress { color: #ffc2da; }
+
 /* ---------- rotate hint ---------- */
 #rotate-hint {
   display: none;

@@ -10,11 +10,34 @@
 </head>
 <body>
 
-  <!-- ===== Menu ===== -->
-  <div id="screen-menu" class="screen active">
+  <!-- ===== Profile select ===== -->
+  <div id="screen-profile" class="screen active">
     <div class="menu-inner">
       <div class="menu-title">🚀 טיל המילים</div>
       <div class="menu-sub">Word Missile</div>
+      <p class="menu-howto">מי משחק היום? / Who's playing?</p>
+      <button id="btn-prof-jonathan" class="big-btn profile-btn">👦 יהונתן <span class="en-label">Jonathan</span></button>
+      <button id="btn-prof-abigail" class="big-btn profile-btn salon-btn">👧 אביגיל <span class="en-label">Abigail</span></button>
+      <button id="btn-prof-guest" class="big-btn profile-btn secondary">👤 אורח <span class="en-label">Guest</span></button>
+      <div id="guest-scenes" class="gone">
+        <div class="scene-label">באיזה עולם לשחק?</div>
+        <div class="scene-row">
+          <button id="btn-scene-desert" class="big-btn scene-btn">🌵 מדבר <span class="en-label">Desert</span></button>
+          <button id="btn-scene-salon" class="big-btn scene-btn salon-btn">💇‍♀️ מספרה <span class="en-label">Salon</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Menu ===== -->
+  <div id="screen-menu" class="screen">
+    <div class="menu-inner">
+      <div class="menu-title">🚀 טיל המילים</div>
+      <div class="menu-sub">Word Missile</div>
+      <div id="menu-profile-row">
+        <span id="menu-profile-label"></span>
+        <button id="btn-switch-profile">🔄 החלפה</button>
+      </div>
       <div class="menu-desert">🌵 🛢️ 🐍 🪨 🌵</div>
       <p class="menu-howto">
         מילה באנגלית מופיעה למעלה — בחרו את הטיל עם התרגום הנכון,
