@@ -22,6 +22,7 @@
       </p>
       <button id="btn-start" class="big-btn">▶️ התחל משחק <span class="en-label">Start</span></button>
       <button id="btn-stats" class="big-btn secondary">📖 המילים שלי <span class="en-label">My Words</span></button>
+      <button id="btn-eval" class="big-btn secondary">📝 מבחן הערכה <span class="en-label">Test</span></button>
       <button id="btn-sound" class="big-btn secondary">🔊 צליל / Sound</button>
       <div class="menu-high">🏆 שיא / High Score: <span id="menu-high">0</span></div>
     </div>
@@ -95,11 +96,51 @@
     </div>
   </div>
 
+  <!-- ===== Evaluation Test ===== -->
+  <div id="screen-test" class="screen">
+    <div class="stats-inner" id="test-entry">
+      <div class="menu-title small">📝 מבחן הערכה</div>
+      <div class="menu-sub">Evaluation Test</div>
+      <p class="menu-howto">
+        20 מילים באנגלית — התאימו כל אחת לתרגום שלה.
+        הציון נשמר עם התאריך, כך שאפשר לעקוב אחרי ההתקדמות!
+      </p>
+      <button id="btn-test-start" class="big-btn">▶️ התחל מבחן <span class="en-label">Start</span></button>
+      <div class="stats-list-title">תוצאות קודמות:</div>
+      <ul id="test-history"></ul>
+      <button id="btn-test-back" class="big-btn secondary">⬅️ חזרה <span class="en-label">Back</span></button>
+    </div>
+
+    <div id="test-leg" class="gone">
+      <div id="test-leg-head">
+        <button id="btn-test-abort" aria-label="ביטול">✖</button>
+        <span id="test-leg-num">שלב 1 / 4</span>
+        <span id="test-leg-progress">✔ 0 / 20</span>
+      </div>
+      <div id="match-area">
+        <div class="match-col" id="col-en"></div>
+        <div class="match-col" id="col-he"></div>
+      </div>
+      <div id="test-hint">לחצו על מילה באנגלית ואז על התרגום שלה</div>
+    </div>
+
+    <div class="stats-inner gone" id="test-result">
+      <div class="menu-title small">התוצאה שלך</div>
+      <div class="menu-sub">Your Score</div>
+      <div id="test-score-big">0 / 20</div>
+      <div id="test-msg"></div>
+      <div class="stats-list-title" id="test-miss-title">מילים לחיזוק (לחצו כדי לשמוע 🔊):</div>
+      <ul id="test-missed"></ul>
+      <button id="btn-test-done" class="big-btn">🏠 חזרה לתפריט <span class="en-label">Menu</span></button>
+    </div>
+  </div>
+
   <div id="rotate-hint">📱 סובבו את הטלפון למצב עומד<br>Please rotate to portrait</div>
 
   <script src="js/words.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/test.js"></script>
   <script src="js/game.js"></script>
 </body>
 </html>
