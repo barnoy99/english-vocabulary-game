@@ -4,7 +4,7 @@
   const $ = id => document.getElementById(id);
   const TOTAL = 20, LEG_SIZE = 5;
 
-  let legs = [], legIdx = 0, selectedEn = null;
+  let legs = [], legIdx = 0, selected = null; // {btn, w, side}
   let attempted = {}, missed = [], score = 0, matchedTotal = 0, lockedCount = 0;
 
   function shuffle(arr) {
@@ -122,7 +122,7 @@
     const leg = legs[legIdx];
     $("test-leg-num").textContent = "שלב " + (legIdx + 1) + " / " + legs.length;
     updateProgress();
-    selectedEn = null;
+    selected = null;
     lockedCount = 0;
     attempted = {};
     const colEn = $("col-en"), colHe = $("col-he");
@@ -140,40 +140,42 @@
     const b = document.createElement("button");
     b.className = "match-btn " + side;
     b.textContent = text;
-    b.addEventListener("click", () => (side === "en" ? onEn(b, w) : onHe(b, w)));
+    b.addEventListener("click", () => onTap(b, w, side));
     return b;
   }
 
-  function onEn(btn, w) {
+  // Either language can be picked first; tapping the selected word again cancels it.
+  function onTap(btn, w, side) {
     if (btn.classList.contains("locked")) return;
     AudioFX.unlock();
-    AudioFX.click();
-    AudioFX.speak(w.en);
-    document.querySelectorAll(".match-btn.en").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    selectedEn = { btn, w };
-  }
-
-  function onHe(btn, w) {
-    if (btn.classList.contains("locked")) return;
-    if (!selectedEn) {
-      const hint = $("test-hint");
-      hint.classList.remove("hint-flash");
-      void hint.offsetWidth;
-      hint.classList.add("hint-flash");
+    if (selected && selected.btn === btn) {
+      // second tap on the same word — cancel the selection
+      btn.classList.remove("selected");
+      selected = null;
+      AudioFX.click();
       return;
     }
-    const en = selectedEn.w;
-    const first = !attempted[en.en];
-    attempted[en.en] = true;
-    if (w.en === en.en) {
+    if (!selected || selected.side === side) {
+      // (re)select within the same column
+      if (selected) selected.btn.classList.remove("selected");
+      btn.classList.add("selected");
+      selected = { btn, w, side };
+      AudioFX.click();
+      if (side === "en") AudioFX.speak(w.en);
+      return;
+    }
+    // opposite columns — attempt the match (scoring is keyed to the English word)
+    const enWord = side === "en" ? w : selected.w;
+    const first = !attempted[enWord.en];
+    attempted[enWord.en] = true;
+    if (w.en === selected.w.en) {
       // correct pair
       if (first) score++;
       AudioFX.click();
-      selectedEn.btn.classList.remove("selected");
-      selectedEn.btn.classList.add("locked");
+      selected.btn.classList.remove("selected");
+      selected.btn.classList.add("locked");
       btn.classList.add("locked");
-      selectedEn = null;
+      selected = null;
       lockedCount++;
       matchedTotal++;
       updateProgress();
@@ -189,15 +191,15 @@
         }, 750);
       }
     } else {
-      // wrong pair — red shake on both; the English word stays selected for another try
+      // wrong pair — red shake on both; the first-selected word stays selected
       if (first) {
-        missed.push(en);
-        const s = Storage.wordStat(en.en);
+        missed.push(enWord);
+        const s = Storage.wordStat(enWord.en);
         s.seen++; s.wrong++; s.streak = 0;
         Storage.save();
       }
       AudioFX.thud();
-      [selectedEn.btn, btn].forEach(b => {
+      [selected.btn, btn].forEach(b => {
         b.classList.remove("miss-flash");
         void b.offsetWidth;
         b.classList.add("miss-flash");

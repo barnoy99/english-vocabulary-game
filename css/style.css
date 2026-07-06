@@ -27,7 +27,7 @@ html, body {
 .screen.active { display: flex; }
 
 /* ---------- menu ---------- */
-#screen-menu, #screen-stats, #screen-test {
+#screen-menu, #screen-stats, #screen-test, #screen-profile {
   background: linear-gradient(#5a3a1c 0%, #7a4f22 40%, #c98d3e 80%, #e8c070 100%);
   align-items: center;
   justify-content: center;

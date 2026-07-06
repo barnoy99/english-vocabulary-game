@@ -844,14 +844,6 @@
     $("menu-high").textContent = Storage.highScore;
   });
 
-  $("btn-reset").addEventListener("click", () => {
-    if (confirm("לאפס את כל ההתקדמות והשיא?")) {
-      Storage.resetProgress();
-      renderStats();
-      $("menu-high").textContent = Storage.highScore;
-    }
-  });
-
   $("btn-sound").addEventListener("click", () => {
     Storage.toggleSound();
     syncSoundBtn();
