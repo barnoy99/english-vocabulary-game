@@ -35,7 +35,7 @@
     salon: {
       colors: { shoulder: "#f2b8cf", road: "#c98b4e", edge: "#8a5a2e", dash: "#e8b47f" },
       decos: ["💈", "🎀", "✨"],
-      obstacles: [{ knot: true, r: 20 }, { emoji: "✂️", r: 18 }, { emoji: "🧼", r: 18, roller: true }],
+      obstacles: [{ knot: true, r: 22 }, { emoji: "✂️", r: 18 }, { emoji: "🧴", r: 19, roller: true }],
       crawler: "🐜",
       vehicle: glyphSupported("🪮") ? { char: "🪮", rot: 0 } : { char: "🖌️", rot: Math.PI / 4 },
       trail: "sparkle",
@@ -613,31 +613,52 @@
   }
 
   function drawKnot(o) {
-    // a nasty tangle of hair: dark scribbled loops + stray strands sticking out
+    // a readable hair tangle: a strand runs through a fluffy brown clump
+    // covered in curly loops, with stray hairs sticking out
     ctx.save();
     ctx.translate(o.x, o.y);
-    ctx.strokeStyle = "#4a2c12";
-    ctx.lineWidth = 3;
     ctx.lineCap = "round";
-    for (let k = 0; k < 3; k++) {
+    // the strand entering and leaving the tangle
+    ctx.strokeStyle = "#5a3a1c";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-o.r * 1.5, -5);
+    ctx.quadraticCurveTo(-o.r * 0.7, 7, 0, 0);
+    ctx.quadraticCurveTo(o.r * 0.7, -7, o.r * 1.5, 5);
+    ctx.stroke();
+    // fluffy clump of hair (overlapping lobes)
+    ctx.fillStyle = "#6b4423";
+    [[0, 0, 0.6], [-0.42, -0.22, 0.42], [0.42, -0.18, 0.44],
+     [-0.2, 0.38, 0.4], [0.26, 0.36, 0.38], [0, -0.42, 0.4]].forEach(l => {
       ctx.beginPath();
-      for (let t = 0; t <= Math.PI * 2 + 0.3; t += 0.22) {
-        const rr = o.r * (0.35 + 0.3 * Math.sin(t * 2.7 + o.seed + k * 2.1));
-        const px = Math.cos(t + k) * rr * 1.15;
-        const py = Math.sin(t * 1.3 + k) * rr;
+      ctx.arc(l[0] * o.r, l[1] * o.r, l[2] * o.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    // curly loops inside the clump (little spirals)
+    ctx.strokeStyle = "#3a2210";
+    ctx.lineWidth = 2.5;
+    for (let k = 0; k < 3; k++) {
+      const cxk = Math.cos(o.seed + k * 2.1) * o.r * 0.3;
+      const cyk = Math.sin(o.seed + k * 2.1) * o.r * 0.3;
+      ctx.beginPath();
+      for (let t = 0; t < Math.PI * 4; t += 0.3) {
+        const rr = 2 + t * o.r * 0.042;
+        const px = cxk + Math.cos(t + k) * rr;
+        const py = cyk + Math.sin(t + k) * rr;
         t === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
       }
       ctx.stroke();
     }
-    ctx.strokeStyle = "#2e1a0a";
-    ctx.lineWidth = 2;
-    for (let k = 0; k < 5; k++) {
-      const a = o.seed + k * 1.35;
+    // stray hairs sticking out
+    ctx.strokeStyle = "#5a3a1c";
+    ctx.lineWidth = 1.5;
+    for (let k = 0; k < 4; k++) {
+      const a = o.seed + k * 1.6 + 0.7;
       ctx.beginPath();
-      ctx.moveTo(Math.cos(a) * o.r * 0.4, Math.sin(a) * o.r * 0.4);
+      ctx.moveTo(Math.cos(a) * o.r * 0.55, Math.sin(a) * o.r * 0.55);
       ctx.quadraticCurveTo(
-        Math.cos(a + 0.4) * o.r * 0.9, Math.sin(a + 0.4) * o.r * 0.9,
-        Math.cos(a + 0.9) * o.r * 1.25, Math.sin(a + 0.9) * o.r * 1.25
+        Math.cos(a + 0.3) * o.r, Math.sin(a + 0.3) * o.r,
+        Math.cos(a - 0.2) * o.r * 1.35, Math.sin(a + 0.6) * o.r * 1.35
       );
       ctx.stroke();
     }
