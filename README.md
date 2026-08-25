@@ -3,7 +3,7 @@
 An English vocabulary practice game for Israeli elementary schoolers, built for Chrome on a phone (portrait, touch only).
 
 **Three profiles**, each with its own saved progress, word pool, and evaluation-test history:
-- **Jonathan (👦 יהונתן)** — desert theme, ~420 harder words (bands 2–4)
+- **Jonathan (👦 יונתן)** — desert theme, ~420 harder words (bands 2–4)
 - **Abigail (👧 אביגיל)** — hair-salon theme (comb instead of missile; knots, scissors, soap and lice as obstacles), ~430 age-appropriate words (bands 0–2)
 - **Guest (👤 אורח)** — picks a theme, plays with all ~720 words, nothing is saved
 
